@@ -1,0 +1,6 @@
+# Discord 대화형 Claude 봇 의존성
+# 격리된 가상환경(.venv)에 설치하세요.  (README 참고)
+
+discord.py>=2.4.0
+claude-agent-sdk>=0.1.0
+python-dotenv>=1.0.0

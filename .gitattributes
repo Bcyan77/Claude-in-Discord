@@ -1,0 +1,13 @@
+# 기본: 텍스트는 저장소에 LF 로 정규화
+* text=auto eol=lf
+
+# 셸 스크립트는 반드시 LF (CRLF 면 리눅스에서 bad interpreter ^M)
+*.sh text eol=lf
+
+# PowerShell 은 CRLF (UTF-8 BOM 과 함께 PS 5.1 호환)
+*.ps1 text eol=crlf
+
+# 바이너리 취급
+*.png binary
+*.jpg binary
+*.pdf binary

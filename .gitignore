@@ -1,0 +1,58 @@
+# 시크릿 (.env.local / .env.bak 같은 파생본까지 — 템플릿만 추적)
+.env
+.env.*
+!.env.example
+
+# 개인 개발 노트 (공개 저장소에는 올리지 않음)
+CLAUDE.md
+
+# 개인 시스템 프롬프트 (템플릿 *.example.md 만 추적)
+system_prompt*.md
+!system_prompt*.example.md
+
+# 격리 가상환경
+.venv/
+venv/
+
+# 세션 상태 / 사용량 / 게임 서버 감시 / 사용자·서버 기억 (.bak·.tmp 파생본 포함)
+sessions.json*
+usage.json*
+watches.json*
+profiles.json*
+guilds.json*
+
+# 에이전트 작업 폴더 / 파일 캐시(첨부·생성물)
+agent_workdir/
+workspace/
+
+# 파이썬 캐시 / 빌드 / 검사 도구
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# 로그
+*.log
+nohup.out
+
+# 백업 / 임시본
+*.bak
+*.tmp
+*.orig
+*~
+
+# 에디터 · 도구 개인 설정 (.claude/settings.json 공유본은 추적)
+.claude/settings.local.json
+.vscode/
+.idea/
+
+# OS 잡파일
+.DS_Store
+Thumbs.db
+desktop.ini
