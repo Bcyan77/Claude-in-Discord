@@ -71,6 +71,21 @@ SERVER_TOOL_NAMES = ("mcp__memory__remember_server", "mcp__memory__forget_server
 SERVER_MAX_FACTS = 16              # 서버당 메모 개수 상한 (여러 채널에서 모이므로 채널 때보다 여유)
 SERVER_MAX_BLOCK_CHARS = 900       # 프롬프트에 주입할 서버 메모 블록 길이 상한
 
+# ── 서버 말투 반영 ──
+# 학습해 둔 서버 분위기 메모의 '어조'를 봇이 실제 답변에 반영할지. 길드마다 따로 설정한다
+# (`/기억 말투`). 말투는 사용자가 쓴 글에서 뽑은 것이라, 어디까지 따라할지를 서버가 정한다.
+TONE_OFF = "off"      # 따라하지 않음 — 페르소나 말투 그대로
+TONE_SOFT = "soft"    # 어조·호칭·문체만. 욕설·모욕·차별 표현은 제외 (기본값)
+TONE_RAW = "raw"      # 제한 없이 서버 말투를 미러링 (관리자가 명시적으로 켠 경우만)
+TONE_MODES = (TONE_OFF, TONE_SOFT, TONE_RAW)
+TONE_DEFAULT = TONE_SOFT
+TONE_OPTION = "tone"                 # guilds.json 항목의 options 안 키 이름
+TONE_LABELS = {
+    TONE_OFF: "끔 — 말투를 따라하지 않아요",
+    TONE_SOFT: "보통 — 어조·호칭·문체만 따라가고, 공격적인 표현은 빼요",
+    TONE_RAW: "그대로 — 제한 없이 이 서버 말투를 씁니다",
+}
+
 # 과거 대화 학습 (`/기억 학습` — 관리자 전용, 채널 기록을 읽어 사용자별 특징을 한 번에 정리)
 LEARN_DEFAULT_MESSAGES = 500       # 스캔할 최근 메시지 수 기본값 (명령 인자 `개수` 로 지정)
 LEARN_MIN_MESSAGES = 50            # 인자 최소

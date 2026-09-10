@@ -175,6 +175,10 @@ Output rules - follow exactly:
 - Capture only what still describes the server weeks from now: what the community is into, its tone
   and register (formal/casual, banter-heavy, help-oriented...), unwritten rules, recurring topics,
   running jokes and shared vocabulary, typical rhythm (bursts at night, quiet on weekdays...).
+- Spend your FIRST one or two lines on HOW people here talk, concretely enough that someone could
+  write a message that fits in: level of formality and which forms of address are normal, how
+  sentences typically end, message length, whether emoji/reactions are common, stock phrases.
+  Describe the register, and never reproduce slurs or abuse as examples.
 - Do NOT write notes that are really about one channel's specific purpose; keep it server-level.
 - NEVER name or describe an individual person, and never quote anything that identifies who said it.
 - NEVER output personal, private or sensitive information of any kind.

@@ -246,6 +246,15 @@ if (Test-Path $gf) {
             $gnotes = ($gentries | ForEach-Object { @($_.Value.facts).Count } | Measure-Object -Sum).Sum
             Row 'ok' '서버 기억' ('서버 ' + $gentries.Count + '개 · ' + $gnotes + '건 (상한 16건/서버)')
         }
+        $tones = @($gj.PSObject.Properties | ForEach-Object { $_.Value.options.tone } |
+                   Where-Object { $_ })
+        $raw = @($tones | Where-Object { $_ -eq 'raw' }).Count
+        $off = @($tones | Where-Object { $_ -eq 'off' }).Count
+        $detail = '기본값 보통 (어조만 · 공격적 표현 제외)'
+        if ($tones.Count -gt 0) {
+            $detail = "$($tones.Count)개 서버가 직접 설정 — 그대로 $($raw)개 · 끔 $($off)개"
+        }
+        Row 'ok' '말투 반영' $detail
     } catch {
         Row 'warn' '서버 기억' 'guilds.json 파싱 실패'
     }

@@ -29,6 +29,11 @@ from .config import (
     MEMORY_MAX_FACTS,
     MEMORY_MAX_NAME_CHARS,
     SERVER_MAX_BLOCK_CHARS,
+    TONE_DEFAULT,
+    TONE_MODES,
+    TONE_OFF,
+    TONE_OPTION,
+    TONE_SOFT,
     log,
 )
 
@@ -127,12 +132,34 @@ class ProfileStore:
         return True, f"잊었습니다: {gone}"
 
     def clear(self, key: str) -> int:
-        """그 사용자의 기억을 모두 삭제. 반환: 지운 개수."""
-        entry = self._data.pop(key, None)
+        """그 대상의 기억을 모두 삭제. 반환: 지운 개수.
+
+        `options` 는 남긴다 — 서버 메모를 지웠다고 그 서버의 말투 설정까지 초기화되면
+        관리자가 의도하지 않은 동작이 된다 (설정과 기억은 수명이 다르다).
+        """
+        entry = self._data.get(key)
         if not entry:
             return 0
+        gone = len(entry.get("facts") or [])
+        options = entry.get("options")
+        if options:
+            self._data[key] = {"options": options, "updated": _now()}
+        else:
+            del self._data[key]
         self._save()
-        return len(entry.get("facts") or [])
+        return gone
+
+    def get_option(self, key: str, name: str, default: object = None) -> object:
+        """그 대상에 붙은 설정값 1개. (기억과 달리 사람이 명시적으로 정하는 값)"""
+        options = (self._data.get(key) or {}).get("options")
+        return options.get(name, default) if isinstance(options, dict) else default
+
+    def set_option(self, key: str, name: str, value: object) -> None:
+        entry = self._data.setdefault(key, {})
+        options = entry.setdefault("options", {})
+        options[name] = value
+        entry["updated"] = _now()
+        self._save()
 
     def stats(self) -> tuple[int, int]:
         """(기억이 있는 사용자 수, 총 사실 개수) — 상태 점검용."""
@@ -165,6 +192,31 @@ class MemoryScope:
 
     def guild_facts(self) -> list[str]:
         return self.guild_store.facts(self.guild_key) if self.has_guild else []
+
+    @property
+    def tone_mode(self) -> str:
+        """이 서버가 정한 말투 반영 수위 (`/기억 말투`). DM 과 모르는 값은 '끔' 으로 본다."""
+        if not self.has_guild:
+            return TONE_OFF
+        mode = self.guild_store.get_option(self.guild_key, TONE_OPTION, TONE_DEFAULT)
+        return mode if mode in TONE_MODES else TONE_DEFAULT
+
+    def _tone_line(self, has_notes: bool) -> str:
+        """말투 지시 한 줄. 참고할 서버 메모가 없으면 지시할 것도 없다."""
+        mode = self.tone_mode
+        if mode == TONE_OFF or not has_notes:
+            return ""
+        base = (
+            "[말투: 위 서버 메모에 적힌 이 서버의 어조에 맞춰 답하세요 — 반말/존댓말, 호칭, 문장 "
+            "끝맺음, 이모지를 쓰는지까지. 바꾸는 것은 '어떻게 말하는가' 뿐이고, 무엇이 사실인지와 "
+            "무엇을 해줄 수 있는지는 그대로입니다."
+        )
+        if mode == TONE_SOFT:
+            base += (
+                " 욕설·모욕·비하·차별 표현은 이 서버에서 흔하더라도 따라 쓰지 마세요 — "
+                "그 부분만 빼고 같은 결의 편한 말투로 답하면 됩니다."
+            )
+        return base + "]"
 
     @staticmethod
     def _numbered(facts: list[str], budget: int) -> str:
@@ -203,6 +255,9 @@ class MemoryScope:
                     + self._numbered(g_facts, SERVER_MAX_BLOCK_CHARS)
                     + "]"
                 )
+            tone = self._tone_line(bool(g_facts))
+            if tone:
+                lines.append(tone)
             lines.append(
                 "[이 서버 전체에 해당하는 지속적인 성격(주로 하는 이야기·분위기와 말투·암묵적인 규칙·"
                 "자주 쓰는 표현)을 알게 되면 remember_server 로 기록하고, 맞지 않게 된 항목은 "

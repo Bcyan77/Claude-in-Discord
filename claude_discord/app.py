@@ -40,6 +40,13 @@ from .config import (
     RESET_KEYWORDS,
     SERVER_MAX_FACTS,
     SESSIONS_FILE,
+    TONE_DEFAULT,
+    TONE_LABELS,
+    TONE_MODES,
+    TONE_OFF,
+    TONE_OPTION,
+    TONE_RAW,
+    TONE_SOFT,
     USAGE_FILE,
     USAGE_KEYWORDS,
     WATCHES_FILE,
@@ -164,6 +171,58 @@ class ClaudeBot(discord.Client):
             else:
                 ok, why = self.guild_notes.remove(key, delete)
                 msg = ("🗑️ " if ok else "⚠️ ") + why
+            await interaction.response.send_message(msg, ephemeral=True)
+
+        @memory.command(name="말투", description="이 서버 말투를 봇이 얼마나 따라할지 (변경은 관리자)")
+        @app_commands.describe(mode="비우면 현재 설정만 보여줘요")
+        @app_commands.rename(mode="설정")
+        @app_commands.choices(mode=[
+            app_commands.Choice(name="끔 — 따라하지 않음", value=TONE_OFF),
+            app_commands.Choice(name="보통 — 어조만, 공격적 표현은 빼고", value=TONE_SOFT),
+            app_commands.Choice(name="그대로 — 제한 없이", value=TONE_RAW),
+        ])
+        async def _memory_tone(interaction: discord.Interaction,
+                               mode: app_commands.Choice[str] | None = None):
+            if interaction.guild_id is None:
+                await interaction.response.send_message(
+                    "⚠️ 말투 설정은 서버에서만 쓸 수 있어요. (DM 은 항상 기본 말투예요.)", ephemeral=True,
+                )
+                return
+            key = ProfileStore.make_guild_key(interaction.guild_id)
+            current = self.guild_notes.get_option(key, TONE_OPTION, TONE_DEFAULT)
+            if current not in TONE_MODES:
+                current = TONE_DEFAULT
+
+            if mode is None:
+                note = f"지금 이 서버 말투 설정: **{TONE_LABELS[current]}**"
+                if current != TONE_OFF and not self.guild_notes.facts(key):
+                    note += ("\n-# 다만 아직 이 서버 분위기 메모가 없어서 따라할 말투가 없어요 — "
+                             "대화가 쌓이거나 `/기억 학습` 을 돌리면 반영되기 시작해요.")
+                await interaction.response.send_message(note, ephemeral=True)
+                return
+
+            # 말투는 서버 전원에게 보이는 공유 설정이라, 서버 메모 삭제와 같은 자격을 요구한다
+            if not self._can_learn(interaction.user):
+                await interaction.response.send_message(
+                    "⚠️ 말투 설정은 서버 전체에 적용돼서, 서버 관리 권한이 있거나 "
+                    "허용 목록에 등록된 계정만 바꿀 수 있어요.",
+                    ephemeral=True,
+                )
+                return
+            if mode.value == current:
+                await interaction.response.send_message(
+                    f"이미 **{TONE_LABELS[current]}** 로 설정돼 있어요.", ephemeral=True,
+                )
+                return
+
+            self.guild_notes.set_option(key, TONE_OPTION, mode.value)
+            msg = f"✅ 말투 설정을 바꿨어요 → **{TONE_LABELS[mode.value]}**"
+            if mode.value == TONE_RAW:
+                msg += ("\n-# 이 서버에서 쓰는 표현을 걸러내지 않고 그대로 씁니다. "
+                        "거친 말이 오가는 서버라면 봇도 그렇게 말해요.")
+            elif mode.value != TONE_OFF and not self.guild_notes.facts(key):
+                msg += ("\n-# 아직 이 서버 분위기 메모가 없어요. `/기억 학습` 을 돌리면 "
+                        "말투를 바로 잡아낼 수 있어요.")
             await interaction.response.send_message(msg, ephemeral=True)
 
         # ⚠️ default_permissions 는 '최상위' 명령에만 적용된다 — 그룹의 서브명령에 붙이면

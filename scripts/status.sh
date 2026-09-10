@@ -183,6 +183,8 @@ GF="$ROOT/guilds.json"
 if [ -f "$GF" ] && [ -x "$PY" ]; then
     gline2="$("$PY" -c "import json; d=json.load(open('$GF',encoding='utf-8')); v=[e for e in d.values() if e.get('facts')]; n=sum(len(e.get('facts') or []) for e in v); print(f'서버 {len(v)}개 · {n}건 (상한 16건/서버)' if v else '기록 없음 (확인: /기억 서버)')" 2>/dev/null)"
     row ok "서버 기억" "${gline2:-guilds.json 파싱 실패}"
+    tline="$("$PY" -c "import json; d=json.load(open('$GF',encoding='utf-8')); t=[(e.get('options') or {}).get('tone') for e in d.values()]; t=[x for x in t if x]; r=t.count('raw'); o=t.count('off'); print(f'{len(t)}개 서버가 직접 설정 — 그대로 {r}개 · 끔 {o}개' if t else '기본값 보통 (어조만 · 공격적 표현 제외)')" 2>/dev/null)"
+    row ok "말투 반영" "${tline:-guilds.json 파싱 실패}"
 else
     row ok "서버 기억" "없음 (대화 중 자동 생성 · 확인: /기억 서버)"
 fi
