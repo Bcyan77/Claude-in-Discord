@@ -45,8 +45,10 @@ from .config import (
     TONE_MODES,
     TONE_OFF,
     TONE_OPTION,
+    TONE_OVERRIDING,
     TONE_RAW,
     TONE_SOFT,
+    TONE_STRONG,
     USAGE_FILE,
     USAGE_KEYWORDS,
     WATCHES_FILE,
@@ -178,8 +180,9 @@ class ClaudeBot(discord.Client):
         @app_commands.rename(mode="설정")
         @app_commands.choices(mode=[
             app_commands.Choice(name="끔 — 따라하지 않음", value=TONE_OFF),
-            app_commands.Choice(name="보통 — 어조만, 공격적 표현은 빼고", value=TONE_SOFT),
-            app_commands.Choice(name="그대로 — 제한 없이", value=TONE_RAW),
+            app_commands.Choice(name="보통 — 캐릭터 말투는 그대로, 어휘·화제만", value=TONE_SOFT),
+            app_commands.Choice(name="강하게 — 서버 말투가 캐릭터 말투를 덮음", value=TONE_STRONG),
+            app_commands.Choice(name="그대로 — 덮는 데다 거친 표현도 안 거름", value=TONE_RAW),
         ])
         async def _memory_tone(interaction: discord.Interaction,
                                mode: app_commands.Choice[str] | None = None):
@@ -217,10 +220,13 @@ class ClaudeBot(discord.Client):
 
             self.guild_notes.set_option(key, TONE_OPTION, mode.value)
             msg = f"✅ 말투 설정을 바꿨어요 → **{TONE_LABELS[mode.value]}**"
+            if mode.value in TONE_OVERRIDING:
+                msg += ("\n-# 이 서버에서는 페르소나에 적어 둔 말투(존댓말/반말, 어미, 말버릇, "
+                        "마침표 습관)보다 서버 말투가 우선합니다. 누구인지·무엇을 해주는지는 그대로예요.")
             if mode.value == TONE_RAW:
-                msg += ("\n-# 이 서버에서 쓰는 표현을 걸러내지 않고 그대로 씁니다. "
-                        "거친 말이 오가는 서버라면 봇도 그렇게 말해요.")
-            elif mode.value != TONE_OFF and not self.guild_notes.facts(key):
+                msg += ("\n-# 거친 말도 거르지 않아요. 다만 특정 집단을 향한 비하 표현과 "
+                        "대화 상대를 깎아내리는 말은 어느 설정에서도 쓰지 않습니다.")
+            if mode.value != TONE_OFF and not self.guild_notes.facts(key):
                 msg += ("\n-# 아직 이 서버 분위기 메모가 없어요. `/기억 학습` 을 돌리면 "
                         "말투를 바로 잡아낼 수 있어요.")
             await interaction.response.send_message(msg, ephemeral=True)

@@ -34,6 +34,7 @@ from .config import (
     TONE_OFF,
     TONE_OPTION,
     TONE_SOFT,
+    TONE_STRONG,
     log,
 )
 
@@ -202,28 +203,58 @@ class MemoryScope:
         return mode if mode in TONE_MODES else TONE_DEFAULT
 
     def _tone_line(self, has_notes: bool) -> str:
-        """말투 지시 한 줄. 참고할 서버 메모가 없으면 지시할 것도 없다.
+        """서버 메모 블록이 말투 기준이라고 알려 주는 한 줄 (사용자 메시지 쪽).
 
-        ⚠️ 이 줄은 '사용자 메시지' 쪽에 붙고 페르소나는 '시스템 프롬프트' 라, 둘이 부딪히면
-        모델은 페르소나를 따른다. 그래서 여기서도 페르소나가 우선이라고 먼저 밝혀 둔다 —
-        안 그러면 캐릭터 말투와 서버 말투가 줄다리기를 하며 섞인다. (우선순위의 원본은 SAFETY_RULES)
+        실제 지시는 `tone_system_rule()` 로 **시스템 프롬프트**에 붙는다 — 페르소나와
+        같은 자리에 있어야 힘이 실리기 때문. 여기서 지시를 되풀이하면 두 곳이 어긋나므로
+        가리키기만 한다.
+        """
+        if self.tone_mode == TONE_OFF or not has_notes:
+            return ""
+        return (
+            "[위 서버 메모에서 '말하는 방식' 을 설명하는 항목이 이 서버의 말투 기준입니다 — "
+            "시스템 규칙의 TONE DIRECTIVE 를 따르세요.]"
+        )
+
+    def tone_system_rule(self) -> str:
+        """시스템 프롬프트 뒤에 붙일 말투 지시. 끔이거나 서버 메모가 없으면 빈 문자열.
+
+        페르소나·SAFETY_RULES 다음에 놓인다. SAFETY_RULES 가 '이 지시는 말투만 건드린다' 를
+        이미 못박아 두었으므로, 여기서는 **얼마나 세게** 만 정한다.
         """
         mode = self.tone_mode
-        if mode == TONE_OFF or not has_notes:
+        if mode == TONE_OFF or not self.guild_facts():
             return ""
-        base = (
-            "[말투: 위 서버 메모에 적힌 이 서버의 분위기에 맞춰 답하세요. 단 페르소나가 정해 둔 "
-            "말투(존댓말/반말, 어미, 말버릇, 쓰지 않는 말)는 서버가 어떻게 말하든 그대로 둡니다 — "
-            "맞추는 건 페르소나가 비워 둔 부분(이 서버에서 쓰는 표현과 밈, 자주 하는 이야기, "
-            "메시지 길이와 느슨함)입니다. 바꾸는 것은 '어떻게 말하는가' 뿐이고, 무엇이 사실인지와 "
-            "무엇을 해줄 수 있는지는 그대로입니다."
-        )
+        where = sanitize_line(self.guild_name, MEMORY_MAX_NAME_CHARS) or "this server"
+        head = f"TONE DIRECTIVE (server: {where}) — "
         if mode == TONE_SOFT:
-            base += (
-                " 욕설·모욕·비하·차별 표현은 이 서버에서 흔하더라도 따라 쓰지 마세요 — "
-                "그 부분만 빼고 같은 결의 편한 말투로 답하면 됩니다."
+            return head + (
+                "keep the persona's voice.\n"
+                "The server notes in the message describe how this community talks. Every part of "
+                "your voice the persona fixes — formality, sentence endings, verbal habits, "
+                "punctuation — stays exactly as the persona wrote it. Take from the server only "
+                "what the persona leaves open: its vocabulary and in-jokes, the topics people "
+                "raise, how long and loose messages run here. Never reproduce slurs, insults or "
+                "abuse, however common they are here."
             )
-        return base + "]"
+        body = head + (
+            "speak the way this server speaks.\n"
+            "The server notes in the message describe how this community talks, and that "
+            "description now sets your voice. Where it differs from the persona, the server wins: "
+            "formality and honorifics, sentence endings, verbal habits, punctuation (including "
+            "whether sentences end in a period at all), vocabulary, rhythm, message length. Write "
+            "like a regular here, not like a guest imitating one.\n"
+            "You are still the same person underneath — your identity, what you care about, your "
+            "judgement and your accuracy do not move with the room. "
+        )
+        if mode == TONE_STRONG:
+            return body + (
+                "Never reproduce slurs, insults or abuse, however common they are here."
+            )
+        return body + (
+            "Coarse and blunt language is fine here if that is how the room talks. Even so, never "
+            "use slurs against any group, and never aim contempt at the person you are replying to."
+        )
 
     @staticmethod
     def _numbered(facts: list[str], budget: int) -> str:

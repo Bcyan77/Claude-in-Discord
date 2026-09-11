@@ -74,16 +74,21 @@ SERVER_MAX_BLOCK_CHARS = 900       # 프롬프트에 주입할 서버 메모 블
 # ── 서버 말투 반영 ──
 # 학습해 둔 서버 분위기 메모의 '어조'를 봇이 실제 답변에 반영할지. 길드마다 따로 설정한다
 # (`/기억 말투`). 말투는 사용자가 쓴 글에서 뽑은 것이라, 어디까지 따라할지를 서버가 정한다.
-TONE_OFF = "off"      # 따라하지 않음 — 페르소나 말투 그대로
-TONE_SOFT = "soft"    # 어조·호칭·문체만. 욕설·모욕·차별 표현은 제외 (기본값)
-TONE_RAW = "raw"      # 제한 없이 서버 말투를 미러링 (관리자가 명시적으로 켠 경우만)
-TONE_MODES = (TONE_OFF, TONE_SOFT, TONE_RAW)
+TONE_OFF = "off"        # 따라하지 않음 — 페르소나 말투 그대로
+TONE_SOFT = "soft"      # 페르소나가 정한 말투는 지키고, 비워 둔 곳(어휘·밈·화제·길이)만 (기본값)
+TONE_STRONG = "strong"  # 서버 말투가 페르소나 말투를 덮는다. 욕설·모욕·차별만 제외
+TONE_RAW = "raw"        # 강하게 + 거친 표현도 거르지 않음 (관리자가 명시적으로 켠 경우만)
+# 순서 = 서버가 봇에 영향을 주는 정도. 뒤로 갈수록 세다.
+TONE_MODES = (TONE_OFF, TONE_SOFT, TONE_STRONG, TONE_RAW)
 TONE_DEFAULT = TONE_SOFT
+# 페르소나 말투를 덮는 모드 — 이 둘만 캐릭터의 어미·존댓말·표기 습관을 바꿀 수 있다
+TONE_OVERRIDING = (TONE_STRONG, TONE_RAW)
 TONE_OPTION = "tone"                 # guilds.json 항목의 options 안 키 이름
 TONE_LABELS = {
     TONE_OFF: "끔 — 말투를 따라하지 않아요",
-    TONE_SOFT: "보통 — 어조·호칭·문체만 따라가고, 공격적인 표현은 빼요",
-    TONE_RAW: "그대로 — 제한 없이 이 서버 말투를 씁니다",
+    TONE_SOFT: "보통 — 캐릭터 말투는 지키고, 서버 어휘·화제·리듬만 따라가요",
+    TONE_STRONG: "강하게 — 이 서버 말투가 캐릭터 말투를 덮어요 (거친 표현은 제외)",
+    TONE_RAW: "그대로 — 덮는 데다 거친 표현도 거르지 않아요",
 }
 
 # 과거 대화 학습 (`/기억 학습` — 관리자 전용, 채널 기록을 읽어 사용자별 특징을 한 번에 정리)

@@ -53,6 +53,11 @@ async def ask_claude(
             tools += list(SERVER_TOOL_NAMES)
         servers["memory"] = make_memory_server(memory)
 
+    # 말투 지시는 페르소나·SAFETY_RULES 와 같은 자리(시스템 프롬프트)에 놓아야 힘이 실린다.
+    # 사용자 메시지에 두면 시스템 프롬프트에 밀려 캐릭터 말투를 못 넘는다.
+    if memory is not None and (tone_rule := memory.tone_system_rule()):
+        system_prompt = system_prompt + "\n\n" + tone_rule
+
     options = ClaudeAgentOptions(
         system_prompt=system_prompt,
         allowed_tools=tools,
@@ -175,10 +180,11 @@ Output rules - follow exactly:
 - Capture only what still describes the server weeks from now: what the community is into, its tone
   and register (formal/casual, banter-heavy, help-oriented...), unwritten rules, recurring topics,
   running jokes and shared vocabulary, typical rhythm (bursts at night, quiet on weekdays...).
-- Spend your FIRST one or two lines on HOW people here talk, concretely enough that someone could
-  write a message that fits in: level of formality and which forms of address are normal, how
-  sentences typically end, message length, whether emoji/reactions are common, stock phrases.
-  Describe the register, and never reproduce slurs or abuse as examples.
+- Spend your FIRST two or three lines on HOW people here talk, concretely enough that someone could
+  write a message that passes for a regular's: level of formality and which forms of address are
+  normal, how sentences typically end, punctuation habits (do sentences even end in a period, how
+  are ?, !, ~ and laughter markers used), typical message length, whether emoji are common, stock
+  phrases. Describe the register, and never reproduce slurs or abuse as examples.
 - Do NOT write notes that are really about one channel's specific purpose; keep it server-level.
 - NEVER name or describe an individual person, and never quote anything that identifies who said it.
 - NEVER output personal, private or sensitive information of any kind.
